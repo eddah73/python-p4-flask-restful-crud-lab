@@ -36,7 +36,7 @@ class Plants(Resource):
         db.session.commit()
 
         return make_response(new_plant.to_dict(), 201)
-    
+
 
 api.add_resource(Plants, '/plants')
 
@@ -44,35 +44,25 @@ api.add_resource(Plants, '/plants')
 class PlantByID(Resource):
 
     def get(self, id):
-        plant = Plant.query.filter_by(id=id).first()
-        
-        if plant:
-            return make_response(jsonify(plant.to_dict()), 200)
-        return make_response(jsonify({"error": "Plant not found"}), 404)
+        plant = Plant.query.filter_by(id=id).first().to_dict()
+        return make_response(jsonify(plant), 200)
     
     def patch(self, id):
         plant = Plant.query.filter_by(id=id).first()
-
-        if not plant:
-            return make_response(jsonify({"error": "Plant not found"}), 404)
-
-        data = request.get_json()
-        for attr in data:
-            setattr(plant, attr, data[attr])
-
+        for attr in request.json:
+            setattr(plant, attr, request.json.get(attr))
+        db.session.add(plant)
         db.session.commit()
-
-        return make_response(jsonify(plant.to_dict()), 200)
+        plant_dict = plant.to_dict()
+        response = make_response(plant_dict, 200)
+        return response
     
     def delete(self, id):
         plant = Plant.query.filter_by(id=id).first()
-        
-        if plant:
-            db.session.delete(plant)
-            db.session.commit()
-            return make_response('', 204)  # Return 204 No Content with no body
-        
-        return make_response(jsonify({"error": "Plant not found"}), 404)
+        db.session.delete(plant)
+        db.session.commit()
+        response = make_response("", 204)
+        return response
 
 
 api.add_resource(PlantByID, '/plants/<int:id>')
